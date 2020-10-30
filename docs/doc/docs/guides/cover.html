@@ -1,0 +1,261 @@
+<!doctype html><html class="sc-itybZL gjzhMR"><head><title data-react-helmet="true">Guide: Using the Pattern Library</title><meta data-react-helmet="true" name="description"/><meta data-react-helmet="true" name="viewport" content="width=device-width, initial-scale=1"/><link data-react-helmet="true" rel="icon" href="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjMwIiB3aWR0aD0iMzAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8ZGVmcz4KICAgICAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudCIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjZDQzNDU1Ii8+CiAgICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMTE1ZjhkIi8+CiAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8L2RlZnM+CiAgICA8cGF0aCBmaWxsPSJ1cmwoI2dyYWRpZW50KSIgZD0iTTEyLjAwMiAyMC40MjZhMS4yNjQgMS4yNjQgMCAwIDEtLjY3NS0uMTg5bC05LjA1LTUuNjNhLjg2Ljg2IDAgMSAxIC45MDYtMS40NTVsOC44MTkgNS40OTQgOC44MTUtNS40OTRhLjg2Ljg2IDAgMSAxIC45MDYgMS40NTZsLTkuMDQ3IDUuNjQzYTEuMjY3IDEuMjY3IDAgMCAxLS42NzQuMTc1eiIvPgogICAgPHBhdGggZmlsbD0idXJsKCNncmFkaWVudCkiIGQ9Ik0xMiAxNy4wNTVhMS4yNDQgMS4yNDQgMCAwIDEtLjY1Ny0uMTg1bC04Ljg4Ni01LjU0NWExLjE5MyAxLjE5MyAwIDAgMSAwLTIuMDIzbDguODg2LTUuNTQyYTEuMjUgMS4yNSAwIDAgMSAxLjMxNCAwbDguODg2IDUuNTQyYTEuMTkzIDEuMTkzIDAgMCAxIDAgMi4wMjNsLTguODg2IDUuNTQxYTEuMjQgMS4yNCAwIDAgMS0uNjU3LjE5em0tNy45OS02Ljc0Mmw3Ljk5IDQuOTggNy45OS00Ljk4TDEyIDUuMzM0bC03Ljk5IDQuOTh6Ii8+CiAgPC9zdmc+" type="image/svg+xml"/><script>/**
+ * This script is embedded into the <head>
+ * of all patternplate documents. It provides
+ * toggle functionality that should run before
+ * the main React application mounts on the
+ * Server Side Rendered HTML document.
+ *
+ *
+ */
+var query = parseQueryString(window.location.search);
+var SUPPORTED = supported();
+window.addEventListener("error", function () {
+    if (SUPPORTED && query["js-warning-enabled"] !== "false") {
+        var el = document.querySelector("[data-js-warning]");
+        if (el) {
+            el.style.display = "block";
+        }
+    }
+});
+var observer = new MutationObserver(function (mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+        for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+            var node = mutations[i].addedNodes[j];
+            if (node.nodeType !== 1) {
+                continue;
+            }
+            if (matches(node, "[data-toggle-name]")) {
+                // Force open all toggles if browser is unsupported
+                if (!SUPPORTED) {
+                    node.setAttribute("data-toggle-enabled", true);
+                }
+                var name = node.getAttribute("data-toggle-name");
+                node.setAttribute("data-toggle-enabled", query[name + "-enabled"]);
+            }
+            if (matches(node, "[data-browser-warning]")) {
+                node.style.display = !SUPPORTED && query["browser-warning-enabled"] !== "false" ? "block" : "none";
+            }
+        }
+    }
+});
+observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+});
+document.documentElement.addEventListener("click", function (e) {
+    if (document.body.getAttribute("data-mounted")) {
+        return;
+    }
+    var trigger = inside(e.target, "[data-trigger-name]");
+    if (trigger) {
+        e.preventDefault();
+        var name = trigger.getAttribute("data-trigger-name");
+        var q = JSON.parse(JSON.stringify(query));
+        q[name + "-enabled"] = q[name + "-enabled"] === "true" ? "false" : "true";
+        window.location.search = "?" + stringifyQuery(q);
+        return;
+    }
+    var link = inside(e.target, "a");
+    if (link) {
+        var href = link.getAttribute("href");
+        if (href.charAt(0) === "." || href.charAt(0) === "/") {
+            var lq = parseQueryString(link.search);
+            e.preventDefault();
+            window.location.href = link.pathname + "?" + stringifyQuery(merge(lq, query));
+        }
+    }
+});
+function matches(node, selector) {
+    if (typeof node.matches === "function") {
+        return node.matches(selector);
+    }
+    return node.msMatchesSelector(selector);
+}
+function merge(o, p) {
+    var r = {};
+    for (var attrname in o) {
+        r[attrname] = o[attrname];
+    }
+    for (var attrname in p) {
+        r[attrname] = p[attrname];
+    }
+    return r;
+}
+function supported() {
+    try {
+        eval("async () => {}");
+        return true;
+    }
+    catch (err) {
+        return false;
+    }
+}
+function stringifyQuery(map) {
+    return Object.keys(map)
+        .map(function (key) {
+        return [key, map[key]].join("=");
+    })
+        .join("&");
+}
+function parseQueryString(search) {
+    search = search.charAt(0) === "?" ? search.slice(1) : search;
+    return search.split("&")
+        .map(function (pair) {
+        return pair.split("=");
+    })
+        .reduce(function (acc, entry) {
+        if (entry[1] === "false" || entry[1] === "true") {
+            acc[entry[0]] = entry[1];
+        }
+        return acc;
+    }, {});
+}
+function inside(el, selector) {
+    while (el) {
+        if (el.nodeType === 1 && matches(el, selector)) {
+            return el;
+        }
+        el = el.parentNode;
+    }
+    return null;
+}
+//# sourceMappingURL=detonator.js.map</script><style data-styled="dCXgxZ kqtUHW eWyRwy dMgSvB fqHHoD jXFTBS cOXzwY jsjcIG gFUKLQ fBmYNS eXMJoF iPVNnp ggkPIL epNeTB cyTnXL jEThmW iJyzCX ddKjzI cOrIrh eswbXw cSrUQn fewAEk hdBDkq ibFlnc zBzBS cpInqJ gVXUPf doKjHI gjzhMR fDmgHR eZeAXF jAWRjc" data-styled-version="4.1.1">
+/* sc-component-id: sc-itybZL */
+.gjzhMR{height:100%;overflow:hidden;}
+/* sc-component-id: sc-eMigcr */
+.fDmgHR{margin:0;height:100%;}
+/* sc-component-id: sc-fzsDOv */
+.eZeAXF{height:100%;}
+/* sc-component-id: sc-gPWkxV */
+.jAWRjc{display:none;}</style><style data-styled="zLAUw hyvjCd EYbnK edZeVH ifEKWK bTOhSR eKKPkA fkNwED dvLjKO gKkDUp bsaJCN cxxBxw bzhoon hYYQlZ kuRbSa ljmSwT gtfcmK ljGtEG ceHHEB eICzKT ciUbIS bSiBFx vbcVo eWsmOQ gZpALX kYhEJp fTlFPR bNSHSH cGpgZG hXzkfa bVZlai htFLXC bRPKfA dotJnt jmWOFj jqfvQh dFOxKs diqJvh feoBAg deDmsg OoSza kihFHG hTUrhf lnbsjh kJkGBS dTXyrM Bnwkf bwfUCt bbwTWv jPLdLk gyskwD jLBIxb kRGcVO kesxhm DHhAv tqHq fSafBA gLIYDr BlkdD kLnEXa kcdTfS biNamq icrfLX csdEvQ" data-styled-version="4.1.1">
+/* sc-component-id: sc-bdVaJa */
+.gKkDUp{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;width:22px;height:22px;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;color:inherit;fill:currentColor;}
+/* sc-component-id: sc-bxivhb */
+.ifEKWK{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-flex:0;-webkit-flex-grow:0;-ms-flex-positive:0;flex-grow:0;} .ifEKWK > span{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;} .ifEKWK > svg{margin-left:.25em;}.bTOhSR{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-flex:0;-webkit-flex-grow:0;-ms-flex-positive:0;flex-grow:0;} .bTOhSR > span{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:baseline;-webkit-box-align:baseline;-ms-flex-align:baseline;align-items:baseline;} .bTOhSR > svg{margin-left:.25em;}.eKKPkA{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-flex:1;-webkit-flex-grow:1;-ms-flex-positive:1;flex-grow:1;} .eKKPkA > span{display:-webkit-inline-box;display:-webkit-inline-flex;display:-ms-inline-flexbox;display:inline-flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;} .eKKPkA > svg{margin-left:.25em;}
+/* sc-component-id: sc-ifAKCX */
+.fkNwED{width:auto;}.dvLjKO{width:calc(100% - 40px);}
+/* sc-component-id: sc-dnqmqq */
+.bwfUCt{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";color:rgb(68,68,68);}
+/* sc-component-id: sc-VigVT */
+.icrfLX{position:relative;z-index:2;display:block;padding:0.5em;color:#383a42;font-family:SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";box-sizing:border-box;font-size:15.3px;line-height:23px;overflow:hidden;} .icrfLX .token.comment,.icrfLX .token.block-comment,.icrfLX .token.prolog,.icrfLX .token.doctype,.icrfLX .token.cdata{color:#a0a1a7;} .icrfLX .token.punctuation{color:#383a42;} .icrfLX .token.tag,.icrfLX .token.attr-name,.icrfLX .token.namespace,.icrfLX .token.deleted{color:#e45649;} .icrfLX .token.function-name{color:#6196cc;} .icrfLX .token.boolean,.icrfLX .token.number,.icrfLX .token.function{color:#c18401;} .icrfLX .token.property,.icrfLX .token.class-name,.icrfLX .token.constant,.icrfLX .token.symbol{color:#f08d49;} .icrfLX .token.selector,.icrfLX .token.important,.icrfLX .token.atrule,.icrfLX .token.keyword,.icrfLX .token.builtin{color:#4078f2;} .icrfLX .token.string,.icrfLX .token.char,.icrfLX .token.attr-value,.icrfLX .token.regex,.icrfLX .token.variable{color:#50a14f;} .icrfLX .token.operator,.icrfLX .token.entity,.icrfLX .token.url{color:#e45649;} .icrfLX .token.important,.icrfLX .token.bold{font-weight:bold;} .icrfLX .token.italic{font-style:italic;} .icrfLX .token.entity{cursor:help;} .icrfLX .token.inserted{color:green;}
+/* sc-component-id: sc-cvbbAY */
+.kuRbSa{display:block;margin:0 auto;} .kuRbSa:link,.kuRbSa:visited{color:rgb(26,119,215);}
+/* sc-component-id: sc-jWBwVP */
+.hYYQlZ{box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;width:100%;fill:currentColor;stroke:currentColor;stroke-width:0;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;padding:10px;background:rgb(13,11,55);}
+/* sc-component-id: sc-jAaTju */
+.ciUbIS{box-sizing:border-box;padding:10px 10px;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-size:14px;color:hsl(0,0%,95%);background-color:rgb(14,14,49);border-style:solid;border-top-color:rgb(26,0,0);border-bottom-color:rgb(26,0,0);border-width:0px 0;width:100%;}.bSiBFx{box-sizing:border-box;padding:10px 10px;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-size:12.6px;color:hsl(0,0%,95%);background-color:rgb(14,14,49);border-style:solid;border-top-color:rgb(26,0,0);border-bottom-color:rgb(26,0,0);border-width:1px 0;width:100%;}
+/* sc-component-id: sc-jDwBTQ */
+.eWsmOQ{margin-right:10px;-webkit-transform-origin:center;-ms-transform-origin:center;transform-origin:center;-webkit-transform:rotate(0deg);-ms-transform:rotate(0deg);transform:rotate(0deg);}
+/* sc-component-id: sc-gPEVay */
+.eICzKT{display:block;position:-webkit-sticky;position:sticky;top:-1px;left:0;} .eICzKT[data-toggle-enabled="true"] .sc-jAaTju{background-color:rgb(13,11,55);border-top-color:rgb(13,11,55);border-bottom-color:transparent;} .eICzKT[data-toggle-enabled="true"] .sc-jDwBTQ{-webkit-transform:rotate(90deg);-ms-transform:rotate(90deg);transform:rotate(90deg);} .eICzKT[data-toggle-enabled="false"] .sc-jAaTju{background-color:rgb(14,14,49);border-top-color:rgb(26,0,0);border-bottom-color:rgb(26,0,0);} .eICzKT[data-toggle-enabled="false"] .sc-jDwBTQ{-webkit-transform:rotate(0);-ms-transform:rotate(0);transform:rotate(0);}
+/* sc-component-id: sc-iRbamj */
+.vbcVo{display:block;color:hsl(0,0%,95%);cursor:pointer;-webkit-text-decoration:none;text-decoration:none;width:100%;}
+/* sc-component-id: sc-gipzik */
+.hXzkfa{box-sizing:border-box;-webkit-flex:1 1 100%;-ms-flex:1 1 100%;flex:1 1 100%;padding:10px;}
+/* sc-component-id: sc-csuQGl */
+.bVZlai{-webkit-flex:1 0 auto;-ms-flex:1 0 auto;flex:1 0 auto;margin:0 6px 0 auto;}.htFLXC{-webkit-flex:1 0 auto;-ms-flex:1 0 auto;flex:1 0 auto;margin:0 10px 0 auto;}
+/* sc-component-id: sc-Rmtcm */
+.kYhEJp{width:100%;box-sizing:border-box;margin-left:1px;}
+/* sc-component-id: sc-bRBYWo */
+.fTlFPR{box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;width:100%;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-text-decoration:none;text-decoration:none;font-size:14px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-weight:100;padding-left:30px;} .fTlFPR:link,.fTlFPR:visited{color:hsl(0,0%,95%);color:rgb(26,119,215);}.bNSHSH{box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;width:100%;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-text-decoration:none;text-decoration:none;font-size:14px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-weight:100;padding-left:30px;} .bNSHSH:link,.bNSHSH:visited{color:hsl(0,0%,95%);}.cGpgZG{box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;width:100%;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-text-decoration:none;text-decoration:none;font-size:14px;line-height:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-weight:100;padding-left:0px;} .cGpgZG:link,.cGpgZG:visited{color:hsl(0,0%,95%);}
+/* sc-component-id: sc-hzDkRC */
+.ljGtEG{display:block;} .ljGtEG[data-toggle-enabled="false"]{display:none;} .ljGtEG[data-toggle-enabled="true"]{display:block;}.ceHHEB{display:none;} .ceHHEB[data-toggle-enabled="false"]{display:none;} .ceHHEB[data-toggle-enabled="true"]{display:block;}
+/* sc-component-id: sc-jhAzac */
+.gZpALX{display:none;} .gZpALX[data-toggle-enabled="false"]{display:none;} .gZpALX[data-toggle-enabled="true"]{display:block;}
+/* sc-component-id: sc-fBuWsC */
+.dotJnt{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:justify;-webkit-justify-content:space-between;-ms-flex-pack:justify;justify-content:space-between;height:40px;padding:10px 15px;background-color:rgb(13,11,55);box-sizing:"border-box";}
+/* sc-component-id: sc-fMiknA */
+.bzhoon{box-sizing:border-box;min-height:60px;background:rgb(13,11,55);}
+/* sc-component-id: sc-eqIVtm */
+.cxxBxw{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;height:100%;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-box-pack:justify;-webkit-justify-content:space-between;-ms-flex-pack:justify;justify-content:space-between;position:relative;background-color:rgb(14,14,49);}
+/* sc-component-id: sc-fAjcbJ */
+.ljmSwT{-webkit-box-flex:1;-webkit-flex-grow:1;-ms-flex-positive:1;flex-grow:1;-webkit-flex-shrink:1;-ms-flex-negative:1;flex-shrink:1;overflow-x:hidden;overflow-y:scroll;-webkit-scroll-behavior:smooth;-moz-scroll-behavior:smooth;-ms-scroll-behavior:smooth;scroll-behavior:smooth;-webkit-overflow-scroll:touch;-webkit-mask-image:linear-gradient( to top, rgba(0,0,0,0), rgba(0,0,0,1) 50px );mask-image:linear-gradient( to top, rgba(0,0,0,0), rgba(0,0,0,1) 50px );-webkit-mask-image:linear-gradient( to top, rgba(0,0,0,0), rgba(0,0,0,1) 50px );} .ljmSwT > *:last-child{margin-bottom:50px;} @media screen{.ljmSwT{-webkit-mask-image:none;mask-image:none;-webkit-mask-image:none;}}
+/* sc-component-id: sc-caSCKo */
+.bRPKfA{-webkit-box-flex:0;-webkit-flex-grow:0;-ms-flex-positive:0;flex-grow:0;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;}
+/* sc-component-id: sc-gisBJw */
+.gtfcmK{margin-bottom:5px;padding-bottom:5px;}
+/* sc-component-id: sc-kjoXOD */
+@media (min-width:480px){.gyskwD{display:block;}}
+/* sc-component-id: sc-TOsTZ */
+.gLIYDr{grid-column:first / span 12;margin:0 0 16px 0;font-size:18px;line-height:27px;padding-left:18px;border-left:4.5px solid rgb(106,115,125);color:rgb(106,115,125);}
+/* sc-component-id: sc-cJSrbW */
+.biNamq{display:inline;padding:0;background:rgb(246,248,250);border-radius:3px;font-size:15.3px;line-height:23px;padding:3px;}
+/* sc-component-id: sc-hmzhuo */
+.BlkdD{grid-column:first / span 12;margin:0 0 16px 0;font-size:18px;line-height:27px;color:rgb(68,68,68);}
+/* sc-component-id: sc-frDJqD */
+.fSafBA{position:absolute;right:100%;top:50%;-webkit-transform:translateY(-50%);-ms-transform:translateY(-50%);transform:translateY(-50%);padding-right:10px;fill:rgb(68,68,68);opacity:0;}
+/* sc-component-id: sc-kvZOFW */
+.DHhAv{color:rgb(68,68,68);-webkit-text-decoration:none;text-decoration:none;} .DHhAv:hover .sc-frDJqD{opacity:1;}
+/* sc-component-id: sc-hqyNC */
+.tqHq{width:0;height:0;}
+/* sc-component-id: sc-jbKcbu */
+.kRGcVO{color:rgb(68,68,68);font-size:36px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";margin:60px 0 16px 0;font-weight:300;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";}.kesxhm{color:rgb(68,68,68);font-size:27px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";margin:60px 0 16px 0;font-weight:300;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";}
+/* sc-component-id: sc-dNLxif */
+.jLBIxb{grid-column:first / span 12;position:relative;color:rgb(68,68,68);margin:60px 0 16px 0;font-weight:300;line-height:1.25;}
+/* sc-component-id: sc-bbmXgH */
+.kcdTfS{grid-column:first / span 12;font-size:18px;line-height:27px;color:rgb(68,68,68);margin-top:4.5px;}
+/* sc-component-id: sc-gGBfsJ */
+.kLnEXa{grid-column:first / span 12;margin:0 0 16px 0;padding-left:36px;white-space:nowrap;} .kLnEXa > *{white-space:normal;}
+/* sc-component-id: sc-jnlKLf */
+.csdEvQ{font-size:18px;line-height:27px;color:rgb(68,68,68);-webkit-text-decoration:none;text-decoration:none;} .csdEvQ:link,.csdEvQ:visited{color:rgb(26,119,215);} .csdEvQ:hover,.csdEvQ:active{-webkit-text-decoration:underline;text-decoration:underline;}
+/* sc-component-id: sc-cIShpX */
+.jPLdLk table{text-align:left;display:block;width:100%;overflow:auto;margin:0 0 16px 0;border-spacing:0;border-collapse:collapse;font-size:18px;line-height:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial, sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";} .jPLdLk tr{color:rgb(68,68,68);border-top:1px solid rgb(228,228,228);background:transparent;} .jPLdLk tbody tr:nth-child(odd){background:rgb(246,248,250);} .jPLdLk th{font-weight:600;} .jPLdLk th,.jPLdLk td{padding:20px 16px;border:1px solid rgb(228,228,228);vertical-align:top;}
+/* sc-component-id: sc-bwCtUz */
+.hyvjCd{width:100%;height:auto;stroke:rgb(68,68,68);stroke-width:0;fill:rgb(68,68,68);}
+/* sc-component-id: sc-hrWEMg */
+.feoBAg{position:relative;-webkit-box-flex:0;-webkit-flex-grow:0;-ms-flex-positive:0;flex-grow:0;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;height:7.5px;width:7.5px;margin-right:5px;border-radius:50%;background:rgb(26,119,215);-webkit-transition:background 0.4s ease-in-out,opacity 0.5s ease-in;transition:background 0.4s ease-in-out,opacity 0.5s ease-in;opacity:0;} .feoBAg::before{content:'';position:absolute;top:50%;left:50%;height:12px;width:12px;-webkit-filter:blur(3px);filter:blur(3px);background:inherit;-webkit-transform:translate(-50%,-50%);-ms-transform:translate(-50%,-50%);transform:translate(-50%,-50%);opacity:.6;}
+/* sc-component-id: sc-eTuwsz */
+.dFOxKs{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;cursor:pointer;position:relative;}
+/* sc-component-id: sc-gwVKww */
+.diqJvh{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";color:hsl(0,0%,95%);position:absolute;right:20px;color:hsl(0,0%,95%);}
+/* sc-component-id: sc-cMhqgX */
+.edZeVH{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center;font-size:0;line-height:0;width:60px;height:60px;cursor:pointer;color:inherit;}
+/* sc-component-id: sc-iuJeZd */
+.jqfvQh{fill:hsl(0,0%,95%);}
+/* sc-component-id: sc-esOvli */
+.jmWOFj{font-size:0;}
+/* sc-component-id: sc-cmthru */
+.kJkGBS{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";color:rgb(68,68,68);font-weight:bold;margin-bottom:1.3em;}
+/* sc-component-id: sc-hMFtBS */
+.kihFHG{display:none;box-sizing:border-box;position:absolute;position:-webkit-sticky;position:sticky;top:0;z-index:4;right:0;left:0;width:100%;padding:15px 20px;padding-left:20px;background:rgb(255,189,46);}
+/* sc-component-id: sc-cLQEGU */
+.hTUrhf{position:relative;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;width:100%;max-width:1240px;margin:0 auto;-webkit-box-pack:justify;-webkit-justify-content:space-between;-ms-flex-pack:justify;justify-content:space-between;}
+/* sc-component-id: sc-hORach */
+.dTXyrM{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";color:rgb(68,68,68);margin-bottom:1.3em;}
+/* sc-component-id: sc-bMVAic */
+.Bnwkf{-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;margin-left:15px;} .Bnwkf:link,.Bnwkf:visited,.Bnwkf:active{color:rgb(68,68,68);}
+/* sc-component-id: sc-bAeIUo */
+.zLAUw{position:relative;box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;width:100%;height:100%;background:hsl(255,0%,100%);}
+/* sc-component-id: sc-iujRgT */
+.bsaJCN{position:relative;z-index:2;height:100%;width:300px;-webkit-flex:0 0 300px;-ms-flex:0 0 300px;flex:0 0 300px;overflow:hidden;} .bsaJCN[data-toggle-enabled="true"]{display:block;} .bsaJCN[data-toggle-enabled="false"]{display:none;}
+/* sc-component-id: sc-exAgwC */
+.OoSza{-webkit-flex:1 1 100%;-ms-flex:1 1 100%;flex:1 1 100%;width:100%;}
+/* sc-component-id: sc-cQFLBn */
+.deDmsg{-webkit-flex:1 1 calc(100% - 0px);-ms-flex:1 1 calc(100% - 0px);flex:1 1 calc(100% - 0px);width:calc(100% - 0px);-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;overflow:auto;position:relative;}
+/* sc-component-id: sc-cbkKFq */
+.EYbnK{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center;position:absolute;z-index:5;top:0;left:300px;-webkit-transform:translate(-100%);-ms-transform:translate(-100%);transform:translate(-100%);color:hsl(0,0%,95%);width:60px;height:60px;background:rgb(13,11,55);} .EYbnK[data-toggle-enabled="true"]{left:300;-webkit-transform:translate(-100%);-ms-transform:translate(-100%);transform:translate(-100%);color:hsl(0,0%,95%);background:rgb(13,11,55);} .EYbnK[data-toggle-enabled="false"]{left:0;-webkit-transform:translate(0);-ms-transform:translate(0);transform:translate(0);color:rgb(14,14,49);background:#fff;} @media screen and (min-width:720px){.EYbnK{background:transparent;}.EYbnK::before{display:none;}}
+/* sc-component-id: sc-dTdPqK */
+.bbwTWv{box-sizing:border-box;margin:0 auto;width:100%;max-width:860px;padding:80px 15px 15px 15px;} @media screen and (min-width:720px){.bbwTWv{padding:60px;}}</style><style data-styled="dCXgxZ kqtUHW eWyRwy dMgSvB fqHHoD jXFTBS cOXzwY jsjcIG gFUKLQ fBmYNS eXMJoF iPVNnp ggkPIL epNeTB cyTnXL jEThmW iJyzCX ddKjzI cOrIrh eswbXw cSrUQn" data-styled-version="4.1.1"></style></head><body data-base="/patternlib/" class="sc-eMigcr fDmgHR"><div data-application-el="patternplate" class="sc-fzsDOv eZeAXF"><div class="sc-bAeIUo zLAUw"><div data-toggle-name="navigation" data-trigger-name="navigation" data-toggle-enabled="true" class="sc-cbkKFq EYbnK"><a class="sc-cMhqgX edZeVH" href="/patternlib/doc/docs/guides/cover.html?navigation-enabled=false" title="Hide navigation [ctrl+alt+n]"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M7.86 12.83V11.53c0-.24.193-.433.432-.433h12.12c.239 0 .433.194.433.433v1.299c0 .24-.194.433-.432.433H8.292a.433.433 0 0 1-.432-.433zm0 5.194v-1.299c0-.24.193-.433.432-.433h12.12c.239 0 .433.194.433.433v1.299c0 .24-.194.432-.432.432H8.292a.433.433 0 0 1-.432-.432zm0-10.388V6.337c0-.24.193-.432.432-.432h12.12c.239 0 .433.193.433.432v1.299c0 .24-.194.433-.432.433H8.292a.433.433 0 0 1-.432-.433zM3.315 13.05v-1.74a.43.43 0 0 1 .43-.428h1.738a.43.43 0 0 1 .43.429v1.74a.43.43 0 0 1-.43.428H3.744a.43.43 0 0 1-.429-.429zm0 5.194v-1.74a.43.43 0 0 1 .43-.428h1.738a.43.43 0 0 1 .43.429v1.74a.43.43 0 0 1-.43.428H3.744a.43.43 0 0 1-.429-.429zm0-10.388V6.117a.43.43 0 0 1 .43-.429h1.738a.43.43 0 0 1 .43.43v1.738a.43.43 0 0 1-.43.43H3.744a.43.43 0 0 1-.429-.43z"></path></svg>[ctrl+alt+n]</span></span></a></div><div data-toggle-name="navigation" class="sc-iujRgT bsaJCN"><div class="sc-eqIVtm cxxBxw"><div class="sc-fMiknA bzhoon"><div class="sc-jWBwVP hYYQlZ"><a target="_self" class="sc-cvbbAY kuRbSa" href="/patternlib/"><span class="sc-bxivhb bTOhSR"><span class="sc-ifAKCX fkNwED"><div><svg width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="sc-bmyXtO cyTnXL"><defs class="sc-dEoRIm jEThmW"><linearGradient id="gradient" x2="100%" y2="100%" class="sc-jtggT iJyzCX"><stop stop-color="#d43455" class="sc-ebFjAB ddKjzI"></stop><stop offset="100%" stop-color="#115f8d" class="sc-jKVCRD cOrIrh"></stop></linearGradient></defs><path fill="url(#gradient)" d="M12.002 20.426a1.264 1.264 0 0 1-.675-.189l-9.05-5.63a.86.86 0 1 1 .906-1.455l8.819 5.494 8.815-5.494a.86.86 0 1 1 .906 1.456l-9.047 5.643a1.267 1.267 0 0 1-.674.175z" class="sc-kaNhvL eswbXw"></path><path fill="url(#gradient)" d="M12 17.055a1.244 1.244 0 0 1-.657-.185l-8.886-5.545a1.193 1.193 0 0 1 0-2.023l8.886-5.542a1.25 1.25 0 0 1 1.314 0l8.886 5.542a1.193 1.193 0 0 1 0 2.023l-8.886 5.541a1.24 1.24 0 0 1-.657.19zm-7.99-6.742l7.99 4.98 7.99-4.98L12 5.334l-7.99 4.98z" class="sc-LKuAh cSrUQn"></path></svg></div></span></span></a></div></div><div class="sc-fAjcbJ ljmSwT"><div class="sc-gisBJw gtfcmK sc-hzDkRC ljGtEG" data-toggle-enabled="true"><div data-toggle-name="guides" data-trigger-name="guides" data-toggle-enabled="false" class="sc-gPEVay eICzKT"><div class="sc-jAaTju ciUbIS"><a class="sc-iRbamj vbcVo" href="/patternlib/doc/docs/guides/cover.html?guides-enabled=true" title="Expand Guides list"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><span class="sc-jDwBTQ eWsmOQ"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="m 14.202,10.767 c 0.14,0.147 0.258,0.31 0.344,0.494 0.215,0.464 0.215,1.01 0,1.474 -0.085,0.185 -0.203,0.347 -0.343,0.494 L 10.66,16.775 9.6,15.715 c 1.183,-1.186 2.46,-2.285 3.55,-3.558 0.058,-0.075 0.073,-0.176 0.033,-0.262 -0.013,-0.03 -0.033,-0.055 -0.056,-0.08 L 9.601,8.29 l 1.06,-1.06 3.54,3.54 z"></path></svg></span>Guides
+</span></span></a></div></div><div data-toggle-name="guides" data-toggle-enabled="false" class="sc-jhAzac gZpALX"><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo fTlFPR" href="/patternlib/doc/docs/guides/cover.html" title="Navigate to Guide: Using the Pattern Library item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Guide: Using the Pattern Library</div><div class="sc-csuQGl bVZlai"></div></span></span></a></div></div><div data-toggle-name="reference" data-trigger-name="reference" data-toggle-enabled="false" class="sc-gPEVay eICzKT"><div class="sc-jAaTju ciUbIS"><a class="sc-iRbamj vbcVo" href="/patternlib/doc/docs/guides/cover.html?reference-enabled=true" title="Expand Reference list"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><span class="sc-jDwBTQ eWsmOQ"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="m 14.202,10.767 c 0.14,0.147 0.258,0.31 0.344,0.494 0.215,0.464 0.215,1.01 0,1.474 -0.085,0.185 -0.203,0.347 -0.343,0.494 L 10.66,16.775 9.6,15.715 c 1.183,-1.186 2.46,-2.285 3.55,-3.558 0.058,-0.075 0.073,-0.176 0.033,-0.262 -0.013,-0.03 -0.033,-0.055 -0.056,-0.08 L 9.601,8.29 l 1.06,-1.06 3.54,3.54 z"></path></svg></span>Reference
+</span></span></a></div></div><div data-toggle-name="reference" data-toggle-enabled="false" class="sc-jhAzac gZpALX"><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo bNSHSH" href="/patternlib/doc/docs/reference/cli.html" title="Navigate to Reference: Resources item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Reference: Resources</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div></div></div><div data-toggle-name="components" data-trigger-name="components" data-toggle-enabled="false" class="sc-gPEVay eICzKT"><div class="sc-jAaTju bSiBFx"><a class="sc-iRbamj vbcVo" href="/patternlib/doc/docs/guides/cover.html?components-enabled=true" title="Expand Components list"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><span class="sc-jDwBTQ eWsmOQ"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="m 14.202,10.767 c 0.14,0.147 0.258,0.31 0.344,0.494 0.215,0.464 0.215,1.01 0,1.474 -0.085,0.185 -0.203,0.347 -0.343,0.494 L 10.66,16.775 9.6,15.715 c 1.183,-1.186 2.46,-2.285 3.55,-3.558 0.058,-0.075 0.073,-0.176 0.033,-0.262 -0.013,-0.03 -0.033,-0.055 -0.056,-0.08 L 9.601,8.29 l 1.06,-1.06 3.54,3.54 z"></path></svg></span>Components
+</span></span></a></div></div><div class="sc-hzDkRC ceHHEB" data-toggle-name="components" data-toggle-enabled="false"><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-button.html" title="Navigate to Component: Button item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Button</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-code.html" title="Navigate to Component: Code item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Code</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-flag.html" title="Navigate to Component: Flag item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Flag</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-headline.html" title="Navigate to Component: Headline item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Headline</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-icon.html" title="Navigate to Component: Icon item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Icon</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-info-pane.html" title="Navigate to Component: Info Pane item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Info Pane</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-logo.html" title="Navigate to Component: Logo item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Logo</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-main-header.html" title="Navigate to Component: Main Header item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Main Header</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-markdown.html" title="Navigate to Component: Markdown item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Markdown</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-search.html" title="Navigate to Component: Search item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Search</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-tag.html" title="Navigate to Component: Tag item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Tag</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-text.html" title="Navigate to Component: Text item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Text</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/@patternplate/component-themes.html" title="Navigate to Component: Themes item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Component: Themes</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div><div class="sc-Rmtcm kYhEJp" type="item"><a class="sc-bRBYWo cGpgZG" href="/patternlib/pattern/main-navigation.html" title="Navigate to Main Navigation item"><span class="sc-bxivhb eKKPkA"><span class="sc-ifAKCX dvLjKO"><div class="sc-gipzik hXzkfa">Main Navigation</div><div class="sc-csuQGl htFLXC"></div></span></span></a></div></div></div><div class="sc-caSCKo bRPKfA"><div class="sc-fBuWsC dotJnt"><div></div><a class="sc-esOvli jmWOFj" href="/patternlib/doc/docs/guides/cover.html?search-enabled=true" title="Enable search [ctrl+alt+space]"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><svg class="sc-iuJeZd jqfvQh sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M8.65 14.248c-.376-.46-.697-.962-.955-1.496-.335-.695-.56-1.44-.668-2.205-.11-.787-.096-1.59.044-2.373.13-.726.37-1.432.71-2.09.75-1.448 1.96-2.636 3.43-3.343.64-.3 1.32-.52 2.02-.64.35-.05.69-.08 1.04-.09h.29c.35.01.7.03 1.04.09.7.11 1.39.32 2.03.62 1.53.717 2.8 1.95 3.55 3.466.32.63.54 1.31.67 2.006.14.78.16 1.584.05 2.37-.106.76-.332 1.51-.667 2.204-.393.81-.933 1.55-1.586 2.174-.675.643-1.472 1.16-2.34 1.515-.895.365-1.862.553-2.832.553s-1.933-.186-2.83-.553c-.684-.28-1.325-.66-1.9-1.13-2.09 2.21-4.294 4.307-6.437 6.464-.09.08-.186.15-.3.187-.1.034-.205.046-.31.035-.072-.01-.145-.03-.213-.058-.308-.13-.497-.455-.454-.79.02-.15.088-.28.184-.395 2.09-2.23 4.3-4.343 6.46-6.506zM14.377 3.5c-.28.006-.56.027-.836.07-.56.085-1.1.25-1.62.49-1.16.542-2.13 1.457-2.74 2.58-.28.518-.48 1.075-.6 1.65-.13.65-.15 1.318-.07 1.974.08.612.25 1.21.52 1.77.31.655.73 1.253 1.25 1.758.54.523 1.17.945 1.86 1.236.715.302 1.486.462 2.26.472.777.01 1.554-.13 2.277-.416.695-.275 1.34-.682 1.885-1.192.53-.492.97-1.08 1.29-1.726.276-.55.464-1.144.557-1.753.1-.63.09-1.273-.01-1.9-.094-.56-.266-1.103-.51-1.613-.58-1.197-1.555-2.185-2.744-2.776-.505-.252-1.047-.43-1.603-.53-.273-.05-.55-.077-.83-.09-.1-.003-.204-.004-.31-.004z"></path></svg>Search</span></span></a><div title="" class="sc-eTuwsz dFOxKs"><div class="sc-gwVKww diqJvh"></div><div class="sc-hrWEMg feoBAg"></div></div></div></div></div></div><div data-scrolling="true" class="sc-cQFLBn deDmsg"><div class="sc-exAgwC OoSza"><div data-browser-warning="true" class="sc-hMFtBS kihFHG"><div class="sc-cLQEGU hTUrhf"><div class="sc-gqPbQI lnbsjh"><div class="sc-cmthru kJkGBS">Nice browser. Is it antique?</div><div class="sc-hORach dTXyrM">No, seriously - your browser is so old that some features of patternplate don&#x27;t work as expected.</div><div class="sc-hORach dTXyrM">Don&#x27;t worry - you can either continue with a restricted version or install an up-to-date browser.</div></div><a class="sc-bMVAic Bnwkf" href="/patternlib/doc/docs/guides/cover.html?browser-warning-enabled=false" title="Close browser warning"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M11.988 1.333C6.08 1.333 1.274 6.14 1.274 12.047c0 5.908 4.806 10.714 10.714 10.714s10.714-4.806 10.714-10.714c0-5.907-4.807-10.714-10.714-10.714zm0 19.78c-5 0-9.066-4.067-9.066-9.066s4.067-9.065 9.066-9.065 9.065 4.066 9.065 9.065-4.067 9.066-9.065 9.066z"></path><path d="M17.232 6.802a.824.824 0 0 0-1.165 0l-4.08 4.08-4.079-4.08a.824.824 0 1 0-1.165 1.166l4.08 4.08-4.08 4.079a.824.824 0 1 0 1.165 1.165l4.08-4.08 4.079 4.08a.82.82 0 0 0 1.165 0 .824.824 0 0 0 0-1.165l-4.08-4.08 4.08-4.079a.824.824 0 0 0 0-1.166z"></path></svg></span></span></a></div></div><div data-js-warning="true" class="sc-hMFtBS kihFHG"><div class="sc-cLQEGU hTUrhf"><div class="sc-gqPbQI lnbsjh"><div class="sc-cmthru kJkGBS">We messed up.</div><div class="sc-hORach dTXyrM">Sorry, but your user experience might be affected.</div><div class="sc-dnqmqq bwfUCt">- Try reloading the page</div><div class="sc-dnqmqq bwfUCt">- Report the problem at github.com/patternplate/patternplate</div></div><a class="sc-bMVAic Bnwkf" href="/patternlib/doc/docs/guides/cover.html?js-warning-enabled=false" title="Close browser warning"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><svg class="sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M11.988 1.333C6.08 1.333 1.274 6.14 1.274 12.047c0 5.908 4.806 10.714 10.714 10.714s10.714-4.806 10.714-10.714c0-5.907-4.807-10.714-10.714-10.714zm0 19.78c-5 0-9.066-4.067-9.066-9.066s4.067-9.065 9.066-9.065 9.065 4.066 9.065 9.065-4.067 9.066-9.065 9.066z"></path><path d="M17.232 6.802a.824.824 0 0 0-1.165 0l-4.08 4.08-4.079-4.08a.824.824 0 1 0-1.165 1.166l4.08 4.08-4.08 4.079a.824.824 0 1 0 1.165 1.165l4.08-4.08 4.079 4.08a.82.82 0 0 0 1.165 0 .824.824 0 0 0 0-1.165l-4.08-4.08 4.08-4.079a.824.824 0 0 0 0-1.166z"></path></svg></span></span></a></div></div><div class="sc-dTdPqK bbwTWv"><div id="doctop"></div><div class="sc-cIShpX jPLdLk"><div class="sc-kjoXOD gyskwD"><h2 order="1" class="sc-dNLxif jLBIxb sc-jbKcbu kRGcVO" id="pattern-libraries-save-developers-time"><a class="sc-kvZOFW DHhAv" href="/patternlib/doc/docs/guides/cover.html#pattern-libraries-save-developers-time" title="Link to &quot;Pattern Libraries Save Developers Time&quot;"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><div id="pattern-libraries-save-developers-time" class="sc-hqyNC tqHq"></div><svg class="sc-frDJqD fSafBA sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M13.836 15.767h-.749c-.05 0-.105 0-.155-.01a3.425 3.425 0 0 1-.935-.151 3.772 3.772 0 0 1-1.918-1.346 3.146 3.146 0 0 1-.321-.502 2.998 2.998 0 0 1-.216-.502c-.146-.393-.222-.814-.222-1.256s.076-.864.222-1.256h1.37c.096 0 .186.01.277.03a2.264 2.264 0 0 0 0 2.45c.1.152.216.293.351.418.136.13.286.241.457.337.321.176.693.281 1.09.281h3.516c1.245 0 2.26-1.014 2.26-2.26s-1.015-2.26-2.26-2.26h-1.487a4.758 4.758 0 0 0-1.28-1.507h2.767a3.768 3.768 0 0 1 0 7.534h-2.767z"></path><path d="M12.46 10.358a2.156 2.156 0 0 0-.462-.336 2.198 2.198 0 0 0-1.085-.282H7.397c-1.245 0-2.26 1.014-2.26 2.26s1.015 2.26 2.26 2.26h1.492c.316.587.753 1.1 1.275 1.507H7.397a3.768 3.768 0 0 1 0-7.534h3.516c.055 0 .105 0 .156.01.321.005.632.06.929.15a3.73 3.73 0 0 1 1.918 1.347c.13.16.236.326.327.502.085.16.16.326.216.502.146.391.22.814.22 1.256s-.074.863-.22 1.255h-1.371a1.19 1.19 0 0 1-.276-.03c.23-.351.361-.773.361-1.225a2.223 2.223 0 0 0-.714-1.642z"></path></svg>Pattern Libraries Save Developers Time</span></span></a></h2>
+<blockquote class="sc-TOsTZ gLIYDr sc-dnqmqq bwfUCt">
+<p class="sc-hmzhuo BlkdD sc-dnqmqq bwfUCt">⏲ <strong>Time invest</strong>: 20 Minutes ––– 👩‍🎓 <strong>Level</strong>: Expert</p>
+</blockquote>
+<h3 order="2" class="sc-dNLxif jLBIxb sc-jbKcbu kesxhm" id="library-features"><a class="sc-kvZOFW DHhAv" href="/patternlib/doc/docs/guides/cover.html#library-features" title="Link to &quot;Library Features&quot;"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><div id="library-features" class="sc-hqyNC tqHq"></div><svg class="sc-frDJqD fSafBA sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M13.836 15.767h-.749c-.05 0-.105 0-.155-.01a3.425 3.425 0 0 1-.935-.151 3.772 3.772 0 0 1-1.918-1.346 3.146 3.146 0 0 1-.321-.502 2.998 2.998 0 0 1-.216-.502c-.146-.393-.222-.814-.222-1.256s.076-.864.222-1.256h1.37c.096 0 .186.01.277.03a2.264 2.264 0 0 0 0 2.45c.1.152.216.293.351.418.136.13.286.241.457.337.321.176.693.281 1.09.281h3.516c1.245 0 2.26-1.014 2.26-2.26s-1.015-2.26-2.26-2.26h-1.487a4.758 4.758 0 0 0-1.28-1.507h2.767a3.768 3.768 0 0 1 0 7.534h-2.767z"></path><path d="M12.46 10.358a2.156 2.156 0 0 0-.462-.336 2.198 2.198 0 0 0-1.085-.282H7.397c-1.245 0-2.26 1.014-2.26 2.26s1.015 2.26 2.26 2.26h1.492c.316.587.753 1.1 1.275 1.507H7.397a3.768 3.768 0 0 1 0-7.534h3.516c.055 0 .105 0 .156.01.321.005.632.06.929.15a3.73 3.73 0 0 1 1.918 1.347c.13.16.236.326.327.502.085.16.16.326.216.502.146.391.22.814.22 1.256s-.074.863-.22 1.255h-1.371a1.19 1.19 0 0 1-.276-.03c.23-.351.361-.773.361-1.225a2.223 2.223 0 0 0-.714-1.642z"></path></svg>Library Features</span></span></a></h3>
+<p class="sc-hmzhuo BlkdD sc-dnqmqq bwfUCt">This library will provide the following information for common components that are reported as not being accessible to all users:</p>
+<ul class="sc-gGBfsJ kLnEXa">
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt">Demo of the Component</div></li>
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt">Accessible Code Sample</div></li>
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt">Links to Resources</div></li>
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt">Tags to Facilitate Searches</div></li>
+</ul>
+<h3 order="2" class="sc-dNLxif jLBIxb sc-jbKcbu kesxhm" id="start-here"><a class="sc-kvZOFW DHhAv" href="/patternlib/doc/docs/guides/cover.html#start-here" title="Link to &quot;Start Here&quot;"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><div id="start-here" class="sc-hqyNC tqHq"></div><svg class="sc-frDJqD fSafBA sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M13.836 15.767h-.749c-.05 0-.105 0-.155-.01a3.425 3.425 0 0 1-.935-.151 3.772 3.772 0 0 1-1.918-1.346 3.146 3.146 0 0 1-.321-.502 2.998 2.998 0 0 1-.216-.502c-.146-.393-.222-.814-.222-1.256s.076-.864.222-1.256h1.37c.096 0 .186.01.277.03a2.264 2.264 0 0 0 0 2.45c.1.152.216.293.351.418.136.13.286.241.457.337.321.176.693.281 1.09.281h3.516c1.245 0 2.26-1.014 2.26-2.26s-1.015-2.26-2.26-2.26h-1.487a4.758 4.758 0 0 0-1.28-1.507h2.767a3.768 3.768 0 0 1 0 7.534h-2.767z"></path><path d="M12.46 10.358a2.156 2.156 0 0 0-.462-.336 2.198 2.198 0 0 0-1.085-.282H7.397c-1.245 0-2.26 1.014-2.26 2.26s1.015 2.26 2.26 2.26h1.492c.316.587.753 1.1 1.275 1.507H7.397a3.768 3.768 0 0 1 0-7.534h3.516c.055 0 .105 0 .156.01.321.005.632.06.929.15a3.73 3.73 0 0 1 1.918 1.347c.13.16.236.326.327.502.085.16.16.326.216.502.146.391.22.814.22 1.256s-.074.863-.22 1.255h-1.371a1.19 1.19 0 0 1-.276-.03c.23-.351.361-.773.361-1.225a2.223 2.223 0 0 0-.714-1.642z"></path></svg>Start Here</span></span></a></h3>
+<p class="sc-hmzhuo BlkdD sc-dnqmqq bwfUCt">Content TBD</p>
+<ul class="sc-gGBfsJ kLnEXa">
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt">Understand <code class="sc-cJSrbW biNamq sc-VigVT icrfLX">HTML</code> and <code class="sc-cJSrbW biNamq sc-VigVT icrfLX">CSS</code> on a fundamental level</div></li>
+</ul>
+<h3 order="2" class="sc-dNLxif jLBIxb sc-jbKcbu kesxhm" id="related-topics"><a class="sc-kvZOFW DHhAv" href="/patternlib/doc/docs/guides/cover.html#related-topics" title="Link to &quot;Related topics&quot;"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED"><div id="related-topics" class="sc-hqyNC tqHq"></div><svg class="sc-frDJqD fSafBA sc-bdVaJa gKkDUp" viewBox="0 0 24 24"><path d="M13.836 15.767h-.749c-.05 0-.105 0-.155-.01a3.425 3.425 0 0 1-.935-.151 3.772 3.772 0 0 1-1.918-1.346 3.146 3.146 0 0 1-.321-.502 2.998 2.998 0 0 1-.216-.502c-.146-.393-.222-.814-.222-1.256s.076-.864.222-1.256h1.37c.096 0 .186.01.277.03a2.264 2.264 0 0 0 0 2.45c.1.152.216.293.351.418.136.13.286.241.457.337.321.176.693.281 1.09.281h3.516c1.245 0 2.26-1.014 2.26-2.26s-1.015-2.26-2.26-2.26h-1.487a4.758 4.758 0 0 0-1.28-1.507h2.767a3.768 3.768 0 0 1 0 7.534h-2.767z"></path><path d="M12.46 10.358a2.156 2.156 0 0 0-.462-.336 2.198 2.198 0 0 0-1.085-.282H7.397c-1.245 0-2.26 1.014-2.26 2.26s1.015 2.26 2.26 2.26h1.492c.316.587.753 1.1 1.275 1.507H7.397a3.768 3.768 0 0 1 0-7.534h3.516c.055 0 .105 0 .156.01.321.005.632.06.929.15a3.73 3.73 0 0 1 1.918 1.347c.13.16.236.326.327.502.085.16.16.326.216.502.146.391.22.814.22 1.256s-.074.863-.22 1.255h-1.371a1.19 1.19 0 0 1-.276-.03c.23-.351.361-.773.361-1.225a2.223 2.223 0 0 0-.714-1.642z"></path></svg>Related topics</span></span></a></h3>
+<ul class="sc-gGBfsJ kLnEXa">
+<li class="sc-bbmXgH kcdTfS"><div class="sc-dnqmqq bwfUCt"><a class="sc-jnlKLf csdEvQ" href="../reference/demos.html?reference-enabled=true"><span class="sc-bxivhb ifEKWK"><span class="sc-ifAKCX fkNwED">Demos</span></span></a></div></li>
+</ul></div></div></div></div></div></div></div><textarea data-application-state="patternplate" readonly="" class="sc-gPWkxV jAWRjc">%5B%7B%22base%22%3A1%2C%22config%22%3A2%2C%22pattern%22%3A3%2C%22startBase%22%3A1%2C%22staticBase%22%3A4%2C%22isStatic%22%3A5%2C%22manifest%22%3A6%7D%2C%22%2Fpatternlib%2F%22%2C%7B%22docs%22%3A7%2C%22entry%22%3A8%2C%22render%22%3A9%2C%22mount%22%3A10%2C%22cover%22%3A11%2C%22ui%22%3A12%7D%2C%7B%22id%22%3A13%7D%2C%22%2Fpatternlib%2F%2Fstatic%22%2Ctrue%2C%7B%22client.js%22%3A14%2C%22client.js.map%22%3A15%2C%22vendors~client.js%22%3A16%2C%22vendors~client.js.map%22%3A17%7D%2C%5B18%2C19%5D%2C%5B20%2C21%5D%2C%22%40patternplate%2Frender-styled-components%2Frender%22%2C%22%40patternplate%2Frender-styled-components%2Fmount%22%2C%22%40patternplate%2Fcover%22%2C%7B%22logo%22%3A22%2C%22favicon%22%3A22%2C%22colorBackgroundDark%22%3A23%2C%22colorBackgroundSecondaryDark%22%3A24%2C%22colorBackgroundTertiaryDark%22%3A24%2C%22colorBorderDark%22%3A25%7D%2C%22patternlib%2Fdoc%2Fdocs%2Fguides%2Fcover%22%2C%22client.6436dac8d6f8e187626e.js%22%2C%22client.6436dac8d6f8e187626e.js.map%22%2C%22vendors~client.98f3e349c3aa0f30a8e4.js%22%2C%22vendors~client.98f3e349c3aa0f30a8e4.js.map%22%2C%22docs%2F**%2F*.md%22%2C%22!docs%2F**%2F*%2Fpatterns%22%2C%22components%2Flegacy%2Flib%2F**%2Fdemo.js%22%2C%22components%2Fnext-generation%2F*%2Fdemo.js%22%2C%22%5Cn%20%20%3Csvg%20height%3D%5C%2230%5C%22%20width%3D%5C%2230%5C%22%20viewBox%3D%5C%220%200%2024%2024%5C%22%20xmlns%3Axlink%3D%5C%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%5C%22%3E%5Cn%20%20%20%20%3Cdefs%3E%5Cn%20%20%20%20%20%20%3ClinearGradient%20id%3D%5C%22gradient%5C%22%20x2%3D%5C%22100%25%5C%22%20y2%3D%5C%22100%25%5C%22%3E%5Cn%20%20%20%20%20%20%20%20%3Cstop%20stop-color%3D%5C%22%23d43455%5C%22%2F%3E%5Cn%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%5C%22100%25%5C%22%20stop-color%3D%5C%22%23115f8d%5C%22%2F%3E%5Cn%20%20%20%20%20%20%3C%2FlinearGradient%3E%5Cn%20%20%20%20%3C%2Fdefs%3E%5Cn%20%20%20%20%3Cpath%20fill%3D%5C%22url(%23gradient)%5C%22%20d%3D%5C%22M12.002%2020.426a1.264%201.264%200%200%201-.675-.189l-9.05-5.63a.86.86%200%201%201%20.906-1.455l8.819%205.494%208.815-5.494a.86.86%200%201%201%20.906%201.456l-9.047%205.643a1.267%201.267%200%200%201-.674.175z%5C%22%3E%3C%2Fpath%3E%5Cn%20%20%20%20%3Cpath%20fill%3D%5C%22url(%23gradient)%5C%22%20d%3D%5C%22M12%2017.055a1.244%201.244%200%200%201-.657-.185l-8.886-5.545a1.193%201.193%200%200%201%200-2.023l8.886-5.542a1.25%201.25%200%200%201%201.314%200l8.886%205.542a1.193%201.193%200%200%201%200%202.023l-8.886%205.541a1.24%201.24%200%200%201-.657.19zm-7.99-6.742l7.99%204.98%207.99-4.98L12%205.334l-7.99%204.98z%5C%22%3E%3C%2Fpath%3E%5Cn%20%20%3C%2Fsvg%3E%5Cn%22%2C%22rgb(14%2C%2014%2C%2049)%22%2C%22rgb(13%2C%2011%2C%2055)%22%2C%22rgb(26%2C%200%2C%200)%22%5D</textarea><script src="/patternlib//static/vendors~client.98f3e349c3aa0f30a8e4.js"></script><script src="/patternlib//static/client.6436dac8d6f8e187626e.js"></script></body></html>
