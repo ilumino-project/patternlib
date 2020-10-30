@@ -36,7 +36,7 @@ export interface Theme {
 }
 
 export function getThemes(ui: Types.PatternplateUiConfig = {}): { dark: Theme; light: Theme } {
-  const defaultMainColor = Color.rgb(203, 232, 128);
+  const defaultMainColor = Color.rgb(26, 119, 215);
   const grayBaseTone = Color.hsl(0, 0, 100);
 
   const colorGroups = {
