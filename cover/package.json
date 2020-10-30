@@ -1,7 +1,7 @@
 {
   "name": "@patternplate/cover",
   "version": "3.2.7",
-  "description": "patternplate landing page",
+  "description": "landing page from patternplate base",
   "main": "lib/index.js",
   "scripts": {
     "clean": "rimraf lib",
@@ -13,11 +13,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/patternplate/patternplate.git"
+    "url": "https://github.com/srayos/patternplate.git"
   },
   "author": {
-    "name": "Mario Nebl",
-    "email": "mario.nebl@sinnerschrader.com"
+    "name": "Stacey Rayos",
+    "email": "stacey@ilumino.co"
   },
   "license": "MIT",
   "publishConfig": {

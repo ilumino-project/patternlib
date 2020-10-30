@@ -50,7 +50,7 @@ export const GithubButton = styled(Components.Link)`
   height: 40px;
   width: 40px;
   fill: color;
-  color: #100133;
+  color: #115f8d;
   svg {
     width: 100%;
     pointer-events: none;
