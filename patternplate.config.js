@@ -18,7 +18,8 @@ module.exports = {
   ],
   entry: [
     "components/legacy/lib/**/demo.js",
-    "components/next-generation/*/demo.js"
+    "components/next-generation/*/demo.js",
+    "components/ilumino-base/*/demo.js"
   ],
   render: "@patternplate/render-styled-components/render",
   mount: "@patternplate/render-styled-components/mount",
