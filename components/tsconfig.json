@@ -14,7 +14,6 @@
     {"path": "./next-generation/main-header"},
     {"path": "./next-generation/markdown"},
     {"path": "./next-generation/search"},
-    {"path": "./next-generation/skip-link"},
     {"path": "./next-generation/svg"},
     {"path": "./next-generation/tag"},
     {"path": "./next-generation/text"},

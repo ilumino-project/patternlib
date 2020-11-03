@@ -1,0 +1,7 @@
+{
+    "name": "select-field",
+    "version": "1.0.0",
+    "patternplate": {
+        "displayName": "Select Field"
+    }
+}
